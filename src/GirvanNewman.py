@@ -97,10 +97,11 @@ def GirvanNewman(G):
     return c, removed_edges
 """
 def plot_graph(G,communities, removed_edges, node_size, fb_flag):
+    #Fb_flag = 0 for small dataset, 1 for large dataset
     if fb_flag == 0:
         pos = nx.spring_layout(G, k=1.1, iterations=100, scale=5)
     else:
-        pos = nx.spring_layout(G, k=0.3, iterations=100, scale=2)
+        pos = nx.spring_layout(G)
     colors = ["r", "g"]
     counter = 0
     f = plt.figure(1)
@@ -117,12 +118,17 @@ def plot_graph(G,communities, removed_edges, node_size, fb_flag):
 def main():
     path1 = "C:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\facebook_combined.txt\\facebook_combined.txt"
     path2 = "C:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\karate\\karate.gml"
+    ##Karate Dataset
     G = readGML(path2)
     print(nx.info(G))
     partition, removed_edges = GirvanNewman(G)
+    plot_graph(G, partition, removed_edges, 500, 0)
+    ##Facebook dataset
     G_1 = readTxt(path1)
-    #plot_graph(G, partition, removed_edges, 500, 0)
+    print(nx.info(G_1))
     pos = nx.spring_layout(G_1)
     nx.draw_networkx(G_1, pos=pos, with_labels=False, node_size=35)
+    partition_fb, removed_edges_fb = GirvanNewman(G_1)
+    plot_graph(G_1, removed_edges, 35, 1)
     plt.show()
 main()
