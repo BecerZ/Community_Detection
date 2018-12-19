@@ -2,6 +2,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings('ignore')
+import numpy as np
+import random
 
 def readGML(path):
     g = nx.read_gml(path, label="id")
@@ -38,11 +40,7 @@ def edge_to_remove(G):
     dict = calculateEdgeBetweenness(G)
     list_of_tuples = dict.items()
     list_of_tuples = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
-    removed_edges = []
-    for (i, v) in list_of_tuples:
-        if v == list_of_tuples[0][1]:
-            removed_edges.append(i)
-    return removed_edges
+    return list_of_tuples[0][0]
 
 def calculateModularity(G, communities):
     modularity = 0
@@ -61,59 +59,49 @@ def calculateModularity(G, communities):
     modularity = modularity / (2*edge_amount) #normalization
     return modularity
 
-def GirvanNewman(G):
+def GirvanNewman(G, community_count):
     removed_edges = []
     partition = nx.connected_component_subgraphs(G)
     g_copy = G.copy()
     length_components = nx.number_connected_components(g_copy)
-    while length_components == 1:
-        edges_to_remove = edge_to_remove(g_copy)
-        for e in edges_to_remove:
-            g_copy.remove_edge(*e)
-        communities = nx.connected_component_subgraphs(g_copy)
-        curr_modularity = calculateModularity(G, communities)
-        if curr_modularity < 0.5:
-            break
-        else:
-            partition = nx.connected_component_subgraphs(g_copy)
-        removed_edges.extend(edges_to_remove)
+    while length_components <= community_count:
+        to_remove = edge_to_remove(g_copy)
+        g_copy.remove_edge(*to_remove)
+        partition = nx.connected_component_subgraphs(g_copy)
+        removed_edges.extend(to_remove)
         length_components = nx.number_connected_components(g_copy)
     return partition, removed_edges
-"""
-def GirvanNewman(G):
-    c = nx.connected_component_subgraphs(G)
-    length_c = nx.number_connected_components(G)
-    removed_edges = {}
-    #continue until the graph is empty
-    level_counter = 1
-    while(length_c == 1):
-        edges = edge_to_remove(G)
-        for e in edges:
-            removed_edges.update({e:level_counter})
-            level_counter += 1
-            G.remove_edge(*e)
-        c= nx.connected_component_subgraphs(G)
-        length_c = nx.number_connected_components(G)
-    return c, removed_edges
-"""
-def plot_graph(G,communities, removed_edges, node_size, fb_flag):
-    #Fb_flag = 0 for small dataset, 1 for large dataset
-    if fb_flag == 0:
-        pos = nx.spring_layout(G, k=1.1, iterations=100, scale=5)
-    else:
-        pos = nx.spring_layout(G)
+
+def plot_graph_large_ds(G,communities, figure_no):
+    pos = nx.spring_layout(G)
     colors = ["r", "g"]
     counter = 0
-    f = plt.figure(1)
+    f = plt.figure(figure_no)
     for i in communities:
         nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color=colors[counter],node_size=node_size, alpha=1)
-        counter += 1
         nx.draw_networkx_edges(G, pos=pos, edgelist=i.edges(), width=2, alpha=1, edge_color='k')
-    if fb_flag == 0:
-        nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
-        nx.draw_networkx_edges(G, pos=pos, edgelist=removed_edges, width=2, alpha=1, edge_color='k', style="dashed")
+        counter += 1
     plt.axis('off')
-    plt.show()
+
+def plot_graph_small_ds(G,communities, node_size, figure_no):
+    #Fb_flag = 0 for small dataset, 1 for large dataset
+    pos = nx.spring_layout(G, k=1.1, iterations=100, scale=5)
+    counter = 0
+    f = plt.figure(figure_no)
+    colors = ["r", "g", "c", "b", "y", "g", "b"]
+    for i in communities:
+        if i.edges():
+            if counter == 7 or counter == 6:
+                nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color=colors[counter], node_size=node_size,alpha=0.5)
+                nx.draw_networkx_edges(G, pos=pos, edgelist=i.edges(), width=2, alpha=1, edge_color='k')
+            else:
+                nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color=colors[counter],node_size=node_size, alpha=1)
+                nx.draw_networkx_edges(G, pos=pos, edgelist=i.edges(), width=2, alpha=1, edge_color='k')
+            counter += 1
+        else:
+            nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color='w', node_size=node_size,alpha=1)
+    nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
+    plt.axis('off')
 
 def main():
     path1 = "C:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\facebook_combined.txt\\facebook_combined.txt"
@@ -121,8 +109,16 @@ def main():
     ##Karate Dataset
     G = readGML(path2)
     print(nx.info(G))
-    partition, removed_edges = GirvanNewman(G)
-    plot_graph(G, partition, removed_edges, 500, 0)
+    nodes_size = len(G.nodes())
+    for i in range(nodes_size):
+        if i == 0:
+            continue
+        else:
+            partition, removed_edges = GirvanNewman(G, i)
+            plot_graph_small_ds(G, partition, 500,i)
+    plt.show()
+    ##For large datasets, use GirvanNewman(G, 1) this will return 2 highest level communities
+    """
     ##Facebook dataset
     G_1 = readTxt(path1)
     print(nx.info(G_1))
@@ -130,5 +126,5 @@ def main():
     nx.draw_networkx(G_1, pos=pos, with_labels=False, node_size=35)
     partition_fb, removed_edges_fb = GirvanNewman(G_1)
     plot_graph(G_1, removed_edges, 35, 1)
-    plt.show()
+    """
 main()
