@@ -4,7 +4,7 @@ import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 import random
-
+from collections import deque
 def readGML(path):
     g = nx.read_gml(path, label="id")
     return g
@@ -13,7 +13,47 @@ def readTxt(path):
     g = nx.read_edgelist(path, delimiter=" ")
     return g
 
-def calculateEdgeBetweenness(G):
+def calculateEdgeBetweennessBrandes(G):
+    vertex_set = G.nodes()
+    betweenness = dict.fromkeys(G, 0.0)
+    betweenness.update(dict.fromkeys(G.edges(), 0.0))
+    for vertex in vertex_set:
+        S = []
+        P = dict((w, []) for w in vertex_set)
+        sigma = dict((t, 0) for t in vertex_set)
+        sigma[vertex] = 1
+        d = dict((t, -1) for t in vertex_set)
+        d[vertex] = 0
+        Q = deque([])
+        Q.append(vertex)
+        while Q:
+            v = Q.popleft()
+            S.append(v)
+            for neighbor in G.neighbors(v):
+                if d[neighbor] < 0:
+                    Q.append(neighbor)
+                    d[neighbor] = d[v] + 1
+                if d[neighbor] == d[v] + 1:
+                    sigma[neighbor] = sigma[neighbor] + sigma[v]
+                    P[neighbor].append(v)
+        delta = dict.fromkeys(S, 0)
+        while S:
+            w = S.pop()
+            coeff = (1 + delta[w]) / sigma[w]
+            for v in P[w]:
+                c = sigma[v] * coeff
+                if (v, w) not in betweenness:
+                    betweenness[(w,v)] += c
+                else:
+                    betweenness[(v,w)] += c
+                delta[v] += c
+                if w != vertex:
+                    betweenness[w] += delta[w]
+    for n in G:
+        del betweenness[n]
+    return betweenness
+
+def calculateEdgeBetweennessNaive(G):
     edge_betweenness_list = {x:0 for x in G.edges()}
     total_number_of_paths = 0
     for source in G.nodes():
@@ -37,7 +77,7 @@ def calculateEdgeBetweenness(G):
     return edge_betweenness_list
 
 def edge_to_remove(G):
-    dict = calculateEdgeBetweenness(G)
+    dict = calculateEdgeBetweennessBrandes(G)
     list_of_tuples = dict.items()
     list_of_tuples = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
     return list_of_tuples[0][0]
@@ -104,12 +144,14 @@ def plot_graph_small_ds(G,communities, node_size, figure_no):
     plt.axis('off')
 
 def main():
-    path1 = "C:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\facebook_combined.txt\\facebook_combined.txt"
-    path2 = "C:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\karate\\karate.gml"
+    path1 = "D:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\facebook_combined.txt\\facebook_combined.txt"
+    path2 = "D:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\karate\\karate.gml"
     ##Karate Dataset
     G = readGML(path2)
     print(nx.info(G))
     nodes_size = len(G.nodes())
+    #partition, removed_edges = GirvanNewman(G, 1)
+    #plot_graph_small_ds(G, partition, 500, 1)
     for i in range(nodes_size):
         if i == 0:
             continue
