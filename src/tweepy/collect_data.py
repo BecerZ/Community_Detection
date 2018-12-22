@@ -55,9 +55,9 @@ while True:
         user_queue.update(queue_addition)
         node_count += len(common_users)
 
-    if processed_account_count % 100 == 0:
-        save_data('data_{0}.pkl'.format(processed_account_count), data)
+    if processed_account_count % 50 == 0:
+        save_data('data/data_{0}.pkl'.format(processed_account_count), data)
 
 end = time.time()
-save_data('data_{0}.pkl'.format(processed_account_count), data)
+save_data('data/data_{0}.pkl'.format(processed_account_count), data)
 print('Elapsed time: {0}'.format(end - start))
