@@ -22,7 +22,6 @@ def insert_sorted_list(data, value):
 
 
 def preprocess(filename):
-
     file = open('{0}{1}'.format(data_path, filename), 'rb')
     data = pickle.load(file)
     file.close()
@@ -57,11 +56,14 @@ def preprocess(filename):
         processed_data[key] = value
     f = open('{0}{1}.txt'.format(output_path, os.path.splitext(filename)[0]), 'w+')
 
-    f.write('{0} {1} {2}\n'.format(id, edge_count, edge_count > (id * 80) / 100))
+    f.write('#{0} {1} {2}\n'.format(id, edge_count, edge_count > ((id ** 2) * 80) / 100))
     for key, value in processed_data.items():
-        f.write('{} {}\n'.format(key, ' '.join(str(i) for i in value)))
-    f.close()
+        if not value:
+            continue
+        for edge in value:
+            f.write('{} {}\n'.format(key, edge))
 
+    f.close()
 
 count = 1
 files = os.listdir(data_path)
@@ -70,4 +72,3 @@ for file in files:
         preprocess(file)
     print('{0} of {1} done'.format(count, len(files)))
     count += 1
-
