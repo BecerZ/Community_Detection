@@ -15,11 +15,11 @@ def thread_time_experiment():
     f = plt.figure(1)
     plt.xlabel('thread count')
     plt.ylabel('seconds')
-    plt.plot(thread_counts, ds_1, color='red', label='dataset 1', linewidth=2)
-    plt.plot(thread_counts, ds_2, color='green', label='dataset 2', linewidth=2)
-    plt.plot(thread_counts, ds_3, color='cyan', label='dataset 3', linewidth=2)
-    plt.plot(thread_counts, ds_4, color='magenta', label='dataset 4', linewidth=2)
-    plt.plot(thread_counts, ds_fb, color='blue', label='fb dataset', linewidth=2)
+    plt.scatter(thread_counts, ds_1, color='red', label='dataset 1')
+    plt.scatter(thread_counts, ds_2, color='green', label='dataset 2')
+    plt.scatter(thread_counts, ds_3, color='cyan', label='dataset 3')
+    plt.scatter(thread_counts, ds_4, color='magenta', label='dataset 4')
+    plt.scatter(thread_counts, ds_fb, color='blue', label='fb dataset')
     legend = plt.legend(loc='upper right', ncol=1)
     plt.show()
 
@@ -162,10 +162,13 @@ def plot_graph_small_ds(G,communities, node_size, figure_no):
     plt.axis('off')
 
 def main():
-    path = "..\\processed_v2\\15.txt"
+    
+    thread_time_experiment()
+
     G = readTxt(path3)
     print(nx.info(G))
-
+    #plot_original(G, 1)
+    
     start = time.time()
     for i in range(3):
         if i == 0:
@@ -175,7 +178,6 @@ def main():
             plot_graph_large_ds(G, partition, i)
     end = time.time()
     print("Elapsed Time In Seconds:", end-start)
-    plot_original(G, 4)
     plt.show()
 
 if __name__== '__main__':
