@@ -1,8 +1,17 @@
 import pickle
 import os
+import json
 
-data_path = './data/'
-output_path = './processed/'
+data_path = './data_v2/'
+output_path = './processed_v2/'
+# data_path = './a/'
+# output_path = './a/'
+
+
+def save_data(filename, data):
+    output = open(filename, 'wb')
+    pickle.dump(data, output)
+    output.close()
 
 
 def find_index(data, value, index):
@@ -40,8 +49,7 @@ def preprocess(filename):
             id += 1
             already_exists = False
         value = []
-        if key == 8:
-            pass
+
         for edge in y:
             if edge in id_look_up:
                 if already_exists and id_look_up[edge] in processed_data and key in processed_data[id_look_up[edge]]:
@@ -62,8 +70,20 @@ def preprocess(filename):
             continue
         for edge in value:
             f.write('{} {}\n'.format(key, edge))
+    # print(id_look_up)
 
     f.close()
+
+# z = set()
+# z.add(6)
+# z.add(7)
+# z.add(8)
+#
+# t = set()
+#
+# t.add(6)
+# a = {5: z, 9: t}
+# save_data('{0}9.pkl'.format(data_path), a)
 
 count = 1
 files = os.listdir(data_path)

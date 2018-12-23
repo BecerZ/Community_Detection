@@ -4,6 +4,7 @@ from tweepy import OAuthHandler
 from credentials import *
 import time
 
+output_path = './data_v2/'
 
 def save_data(filename, data):
     output = open(filename, 'wb')
@@ -43,21 +44,20 @@ while True:
         protected_accounts += 1
         continue
 
-    common_users = set(followers) & set(followers)
+    common_users = set(followers) & set(following)
     data[user_id] = common_users
     processed_account_count += 1
-    queue_addition = set(followers) | set(following)
 
     if len(user_queue) + node_count < max_node_count:
-        if node_count + len(queue_addition) > max_node_count:
-            for i in range(node_count + len(queue_addition) - max_node_count):
-                queue_addition.pop()
-        user_queue.update(queue_addition)
+        if node_count + len(common_users) > max_node_count:
+            for i in range(node_count + len(common_users) - max_node_count):
+                common_users.pop()
+        user_queue.update(common_users)
         node_count += len(common_users)
 
-    if processed_account_count % 50 == 0:
-        save_data('data/data_{0}.pkl'.format(processed_account_count), data)
+    if processed_account_count % 5 == 0:
+        save_data('{0}{1}.pkl'.format(output_path, processed_account_count), data)
 
 end = time.time()
-save_data('data/data_{0}.pkl'.format(processed_account_count), data)
+save_data('{0}{1}.pkl'.format(output_path, processed_account_count), data)
 print('Elapsed time: {0}'.format(end - start))
