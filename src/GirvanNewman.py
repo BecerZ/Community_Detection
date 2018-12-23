@@ -1,10 +1,32 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import time
+from collections import deque
 import warnings
 warnings.filterwarnings('ignore')
-import numpy as np
-import random
-from collections import deque
+
+def thread_time_experiment():
+    thread_counts = [1, 2, 4, 8]
+    ds_1 = [1.966, 1.088, 0.755, 0.552]
+    ds_2 = [39.506, 20.88, 12.661, 11.486]
+    ds_3 = [613.065, 318.05, 200.447, 161.122]
+    ds_4 = [3206.39, 1750.63, 1126.12, 1030.27]
+    ds_fb = [1119.22, 567.387, 312.696, 281.434]
+    f = plt.figure(1)
+    plt.xlabel('thread count')
+    plt.ylabel('seconds')
+    plt.plot(thread_counts, ds_1, color='red', label='dataset 1', linewidth=2)
+    plt.plot(thread_counts, ds_2, color='green', label='dataset 2', linewidth=2)
+    plt.plot(thread_counts, ds_3, color='cyan', label='dataset 3', linewidth=2)
+    plt.plot(thread_counts, ds_4, color='magenta', label='dataset 4', linewidth=2)
+    plt.plot(thread_counts, ds_fb, color='blue', label='fb dataset', linewidth=2)
+    legend = plt.legend(loc='upper right', ncol=1)
+    plt.show()
+
+def readGraphml(path):
+    g = nx.read_graphml(path)
+    return g
+
 def readGML(path):
     g = nx.read_gml(path, label="id")
     return g
@@ -12,6 +34,15 @@ def readGML(path):
 def readTxt(path):
     g = nx.read_edgelist(path, delimiter=" ")
     return g
+
+def writeTxt(path):
+    out = open(path, 'w')
+    for e in G.edges():
+        print(e[0])
+        line = str(e[0]) + " " + str(e[1])
+        out.write(line)
+        out.write("\n")
+
 
 def calculateEdgeBetweennessBrandes(G):
     vertex_set = G.nodes()
@@ -39,16 +70,16 @@ def calculateEdgeBetweennessBrandes(G):
         delta = dict.fromkeys(S, 0)
         while S:
             w = S.pop()
-            coeff = (1 + delta[w]) / sigma[w]
             for v in P[w]:
-                c = sigma[v] * coeff
+                c = sigma[v] /sigma[w]
+                c = c *(1 + delta[w])
                 if (v, w) not in betweenness:
                     betweenness[(w,v)] += c
                 else:
                     betweenness[(v,w)] += c
                 delta[v] += c
-                if w != vertex:
-                    betweenness[w] += delta[w]
+            if w != vertex:
+                betweenness[w] += delta[w]
     for n in G:
         del betweenness[n]
     return betweenness
@@ -82,23 +113,6 @@ def edge_to_remove(G):
     list_of_tuples = sorted(list_of_tuples, key=lambda x: x[1], reverse=True)
     return list_of_tuples[0][0]
 
-def calculateModularity(G, communities):
-    modularity = 0
-    edge_amount = len(G.edges())
-    for community in communities:
-        degree_list = [(node, val) for (node, val) in community.degree()]
-        for i in degree_list:
-            source = i[0]
-            source_degree = i[1]
-            for j in degree_list:
-                target = j[0]
-                target_degree = j[1]
-                if source != target:
-                    if (source,target) in community.edges():
-                        modularity += (1-((source_degree*target_degree)/(2*edge_amount)))
-    modularity = modularity / (2*edge_amount) #normalization
-    return modularity
-
 def GirvanNewman(G, community_count):
     removed_edges = []
     partition = nx.connected_component_subgraphs(G)
@@ -112,19 +126,23 @@ def GirvanNewman(G, community_count):
         length_components = nx.number_connected_components(g_copy)
     return partition, removed_edges
 
-def plot_graph_large_ds(G,communities, figure_no):
+def plot_original(G, figure_no):
     pos = nx.spring_layout(G)
-    colors = ["r", "g"]
+    f = plt.figure(figure_no)
+    nx.draw(G, pos=pos, node_size=10, node_color ="g")
+    plt.axis('off')
+def plot_graph_large_ds(G,communities,figure_no):
+    pos = nx.spring_layout(G)
+    colors = ["r", "g", "c", "b", "y", "g", "b"]
     counter = 0
     f = plt.figure(figure_no)
     for i in communities:
-        nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color=colors[counter],node_size=node_size, alpha=1)
+        nx.draw_networkx_nodes(G, pos=pos, nodelist=list(i.nodes()), node_color=colors[counter],node_size=10, alpha=1)
         nx.draw_networkx_edges(G, pos=pos, edgelist=i.edges(), width=2, alpha=1, edge_color='k')
         counter += 1
     plt.axis('off')
 
 def plot_graph_small_ds(G,communities, node_size, figure_no):
-    #Fb_flag = 0 for small dataset, 1 for large dataset
     pos = nx.spring_layout(G, k=1.1, iterations=100, scale=5)
     counter = 0
     f = plt.figure(figure_no)
@@ -144,29 +162,21 @@ def plot_graph_small_ds(G,communities, node_size, figure_no):
     plt.axis('off')
 
 def main():
-    path1 = "D:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\facebook_combined.txt\\facebook_combined.txt"
-    path2 = "D:\\Users\\Bora\\Desktop\\ALL SHITS\\Bilkent\\4. Senior Year\\CS425\\Project\\karate\\karate.gml"
-    ##Karate Dataset
-    G = readGML(path2)
+    path = "..\\processed_v2\\15.txt"
+    G = readTxt(path3)
     print(nx.info(G))
-    nodes_size = len(G.nodes())
-    #partition, removed_edges = GirvanNewman(G, 1)
-    #plot_graph_small_ds(G, partition, 500, 1)
-    for i in range(nodes_size):
+
+    start = time.time()
+    for i in range(3):
         if i == 0:
             continue
         else:
             partition, removed_edges = GirvanNewman(G, i)
-            plot_graph_small_ds(G, partition, 500,i)
+            plot_graph_large_ds(G, partition, i)
+    end = time.time()
+    print("Elapsed Time In Seconds:", end-start)
+    plot_original(G, 4)
     plt.show()
-    ##For large datasets, use GirvanNewman(G, 1) this will return 2 highest level communities
-    """
-    ##Facebook dataset
-    G_1 = readTxt(path1)
-    print(nx.info(G_1))
-    pos = nx.spring_layout(G_1)
-    nx.draw_networkx(G_1, pos=pos, with_labels=False, node_size=35)
-    partition_fb, removed_edges_fb = GirvanNewman(G_1)
-    plot_graph(G_1, removed_edges, 35, 1)
-    """
-main()
+
+if __name__== '__main__':
+    main()
